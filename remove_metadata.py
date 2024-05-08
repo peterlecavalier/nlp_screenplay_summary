@@ -6,7 +6,7 @@ from glob import glob
 import os
 from tqdm import tqdm
 
-MOVIES_FP = "."
+MOVIES_FP = "../Movie-Script-Database"
 
 fps = glob(f"{MOVIES_FP}/scripts/parsed/tagged/*.txt")
 

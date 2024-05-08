@@ -6,7 +6,7 @@ from tqdm import tqdm
 import numpy as np
 import os
 
-MOVIES_FP = "."
+MOVIES_FP = "../Movie-Script-Database"
 DICT_FP = "./tokens.json"
 
 # Function to split up tagged scripts and corresponding summaries
@@ -19,12 +19,12 @@ def split_into_chunks(tagged, summary, chunk_len):
     summary_chunk_len = int(np.floor(len(summary) / divisor))
 
     # Make new summary
-    while len(summary) > 1:
+    while len(summary) > 0:
         summary_chunks.append(summary[:summary_chunk_len])
         summary = summary[summary_chunk_len:]
 
     # Make new tagged
-    while len(tagged) > 1:
+    while len(tagged) > 0:
         tagged_chunks.append(tagged[:chunk_len])
         tagged = tagged[chunk_len:]
     
@@ -39,7 +39,7 @@ class MovieDataset(Dataset):
 
     def __getitem__(self, idx):
         # Return input IDs and labels as dictionaries
-        return {'input_ids': self.encodings[idx], 'labels': self.labels[idx]}
+        return {'input_ids': self.encodings[idx], 'decoder_input_ids': self.labels[idx]}
 
     def __len__(self):
         return len(self.labels)
@@ -79,7 +79,7 @@ if os.path.isfile(DICT_FP):
     train_dataset.load_dataset(DICT_FP)
 else:
     # Parse our metadata to create new dict of dialog and plot summary (from Wikipedia)
-    for key in tqdm(metadata.keys(), desc="Processing metadata"):
+    for key in tqdm(list(metadata.keys()), desc="Processing metadata"):
         if ('Summary' not in metadata[key]) or (metadata[key]['Summary'] is None):
             continue
 
@@ -95,7 +95,7 @@ else:
         tagged_tokenized = tokenizer.encode(tagged, truncation=False, padding=False)
         summary_tokenized = tokenizer.encode(summary, truncation=False, padding=False)
 
-        tagged_chunks, summary_chunks = split_into_chunks(tagged_tokenized, summary_tokenized, chunk_len=16384)
+        tagged_chunks, summary_chunks = split_into_chunks(tagged_tokenized, summary_tokenized, chunk_len=4096)
 
         for idx in range(len(tagged_chunks)):
             input_ids.append(tagged_chunks[idx])
@@ -123,6 +123,7 @@ training_args = TrainingArguments(
     save_strategy="epoch",
     logging_dir="./logs",
     learning_rate=5e-5,
+    gradient_checkpointing=True
 )
 
 # Data collator for padding
