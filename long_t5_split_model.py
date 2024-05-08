@@ -11,6 +11,9 @@ DICT_FP = "./tokens.json"
 
 # Function to split up tagged scripts and corresponding summaries
 def split_into_chunks(tagged, summary, chunk_len):
+    # Get desired chunk length
+    padded_summary_len = int(2400 * (chunk_len / 16384))
+
     tagged_chunks = []
     summary_chunks = []
 
@@ -27,6 +30,10 @@ def split_into_chunks(tagged, summary, chunk_len):
     while len(tagged) > 0:
         tagged_chunks.append(tagged[:chunk_len])
         tagged = tagged[chunk_len:]
+    
+    # Pad the chunks to uniform length
+    tagged_chunks = [chunk + [0]*(chunk_len - len(chunk)) for chunk in tagged_chunks]
+    summary_chunks = [chunk + [0]*(padded_summary_len - len(chunk)) for chunk in summary_chunks]
     
     # return list of lists for tagged and then summary
     return tagged_chunks, summary_chunks
